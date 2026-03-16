@@ -1,0 +1,21 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ilovekitty.ca
+          username: admin
+          port: 21098
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /home/admin/Family-Guy-New-Episode-Emailer
+            git fetch origin
+            git reset --hard origin/main
