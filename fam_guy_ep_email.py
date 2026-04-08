@@ -1,5 +1,5 @@
 import requests
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -7,8 +7,11 @@ import json
 from string import Template
 import re
 import os
+import random
+import glob
 import logging
 import argparse
+from email.mime.image import MIMEImage
 
 # Get the directory where this script is located
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -17,6 +20,7 @@ CONFIG_FILE = os.path.join(SCRIPT_DIR, "config", "config.json")
 TEMPLATE_FILE = os.path.join(SCRIPT_DIR, "config", "email_template.html")
 TEMPLATE_UPCOMING_FILE = os.path.join(SCRIPT_DIR, "config", "email_template_upcoming.html")
 UPCOMING_NOTIFIED_FILE = os.path.join(SCRIPT_DIR, "upcoming_notified.json")
+IMAGES_DIR = os.path.join(SCRIPT_DIR, "config", "images")
 LOG_FILE = os.path.join(SCRIPT_DIR, "app.log")
 
 def setup_logging(verbose=False):
@@ -66,12 +70,28 @@ def has_new_upcoming(upcoming, notified_ids):
     current_ids = [ep["id"] for ep in upcoming[:5]]
     return current_ids != notified_ids
 
-def send_email(subject, body, email_config, log):
-    msg = MIMEMultipart()
+def pick_random_characters(count=2):
+    files = sorted(glob.glob(os.path.join(IMAGES_DIR, "*.png")))
+    if not files:
+        return []
+    return random.sample(files, min(count, len(files)))
+
+def send_email(subject, body, email_config, log, inline_images=None):
+    msg = MIMEMultipart("related")
     msg["From"] = email_config["username"]
     msg["To"] = ", ".join(email_config["to"])
     msg["Subject"] = subject
     msg.attach(MIMEText(body, "html"))
+
+    for cid, path in (inline_images or {}).items():
+        try:
+            with open(path, "rb") as fh:
+                img = MIMEImage(fh.read())
+            img.add_header("Content-ID", f"<{cid}>")
+            img.add_header("Content-Disposition", "inline", filename=os.path.basename(path))
+            msg.attach(img)
+        except Exception as e:
+            log.error(f"Failed to attach image {path}: {e}")
 
     try:
         with smtplib.SMTP(email_config["smtp_server"], email_config["smtp_port"]) as server:
@@ -117,7 +137,7 @@ def fetch_episodes(log):
         return None, []
 
     # Use airdate < today so emails go out the day after Fox airing,
-    # which is when episodes actually appear on Disney+/Hulu.
+    # which is when episodes actually appear on Disney+.
     aired = [ep for ep in episodes if ep.get("airdate") and ep["airdate"] < today]
     upcoming = [ep for ep in episodes if ep.get("airdate") and ep["airdate"] >= today]
 
@@ -135,19 +155,34 @@ def format_upcoming_html(upcoming):
     if not upcoming:
         return ""
 
+    cell = 'style="padding:8px 10px; font-size:13px; color:#3a2f24; border-bottom:1px solid #e8dfd0;"'
     rows = ""
-    for ep in upcoming[:5]:
+    for i, ep in enumerate(upcoming[:5]):
         title = ep.get("name") or "TBA"
         airdate = ep.get("airdate") or "TBA"
-        rows += f"<tr><td>S{ep['season']}E{ep['number']}</td><td>{title}</td><td>{airdate}</td></tr>"
+        try:
+            streaming = (datetime.strptime(airdate, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
+        except ValueError:
+            streaming = "TBA"
+        bg = "#ffffff" if i % 2 == 0 else "#fdf6ec"
+        rows += (
+            f'<tr bgcolor="{bg}">'
+            f'<td {cell}><strong>S{ep["season"]}E{ep["number"]}</strong></td>'
+            f'<td {cell}>{title}</td>'
+            f'<td {cell}>{airdate}</td>'
+            f'<td {cell}>{streaming}</td>'
+            f'</tr>'
+        )
 
+    head = 'style="padding:8px 10px; text-align:left; font-size:11px; font-weight:bold; color:#ffffff; text-transform:uppercase; letter-spacing:0.5px;"'
     return f"""
-      <p><strong>📅 Upcoming Episodes:</strong></p>
-      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
-        <tr style="background-color: #f0f0f0;">
-          <th style="padding: 8px; text-align: left; border-bottom: 1px solid #ddd;">Episode</th>
-          <th style="padding: 8px; text-align: left; border-bottom: 1px solid #ddd;">Title</th>
-          <th style="padding: 8px; text-align: left; border-bottom: 1px solid #ddd;">Air Date</th>
+      <p style="margin:0 0 12px 0; font-size:14px; font-weight:bold; color:#1a1a1a;">Upcoming Episodes</p>
+      <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse; border:1px solid #c8102e;">
+        <tr bgcolor="#c8102e">
+          <th {head} width="60">Ep</th>
+          <th {head}>Title</th>
+          <th {head} width="80">Aired</th>
+          <th {head} width="80">Disney+</th>
         </tr>
         {rows}
       </table>
@@ -178,6 +213,17 @@ def main():
 
     new_ep = latest and is_new_episode(latest, previous_episode)
 
+    chars = pick_random_characters(2)
+    inline_images = {}
+    char1_html = ""
+    char2_html = ""
+    if len(chars) >= 1:
+        inline_images["char1"] = chars[0]
+        char1_html = '<img src="cid:char1" alt="" width="90" style="display:block; border:0; outline:none;">'
+    if len(chars) >= 2:
+        inline_images["char2"] = chars[1]
+        char2_html = '<img src="cid:char2" alt="" width="90" style="display:block; border:0; outline:none;">'
+
     if new_ep:
         log.info(f"New episode: S{latest['season']}E{latest['number']} - {latest['name']}")
         subject = f"New Family Guy Episode: S{latest['season']}E{latest['number']}"
@@ -188,9 +234,11 @@ def main():
             episode=latest['number'],
             airdate=latest['airdate'],
             summary=latest['summary'],
-            upcoming=upcoming_html
+            upcoming=upcoming_html,
+            character1=char1_html,
+            character2=char2_html,
         )
-        if send_email(subject, body, email_config, log):
+        if send_email(subject, body, email_config, log, inline_images):
             save_latest_episode(latest)
             if upcoming:
                 save_upcoming_notified(upcoming)
@@ -199,8 +247,12 @@ def main():
         log.info(f"New upcoming episodes detected: {len(upcoming)} scheduled")
         subject = "Family Guy: Upcoming Episodes"
         upcoming_html = format_upcoming_html(upcoming)
-        body = upcoming_template.substitute(upcoming=upcoming_html)
-        if send_email(subject, body, email_config, log):
+        body = upcoming_template.substitute(
+            upcoming=upcoming_html,
+            character1=char1_html,
+            character2=char2_html,
+        )
+        if send_email(subject, body, email_config, log, inline_images):
             save_upcoming_notified(upcoming)
             log.info("Upcoming episodes email sent")
     else:

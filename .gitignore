@@ -6,3 +6,4 @@ __pycache__/
 .claude/
 .env
 upcoming_notified.json
+config/images_backup/

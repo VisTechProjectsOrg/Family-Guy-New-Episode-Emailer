@@ -1,15 +1,84 @@
-<html>
-  <body style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
-    <div style="max-width: 600px; background-color: #ffffff; padding: 20px; border-radius: 10px; border: 2px dashed #faaf00;">
-      <h1 style="color: #cc0000;">📺 Sup Family Guy viewers!</h1>
-      <p><strong>New episode just dropped!</strong></p>
-      <hr style="border-top: 1px solid #ddd;" />
-      <p><strong>🎬 Title:</strong> $title</p>
-      <p><strong>🧭 Season:</strong> $season, <strong>Episode:</strong> $episode</p>
-      <p><strong>📆 Airdate:</strong> $airdate</p>
-      <p><strong>📜 Summary:</strong> $summary</p>
-      <hr style="border-top: 1px solid #ddd;" />
-      $upcoming
-    </div>
-  </body>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml"
+    xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!--[if gte mso 9]>
+  <xml>
+    <o:OfficeDocumentSettings>
+      <o:AllowPNG/>
+      <o:PixelsPerInch>96</o:PixelsPerInch>
+    </o:OfficeDocumentSettings>
+  </xml>
+  <![endif]-->
+  <title>New Family Guy Episode</title>
+</head>
+<body style="margin:0; padding:0; background-color:#fdf6ec; font-family: -apple-system, 'Segoe UI', Arial, sans-serif;">
+  <table cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#fdf6ec">
+    <tr>
+      <td align="center" style="padding: 32px 16px;">
+
+        <!--[if mso]>
+        <table cellpadding="0" cellspacing="0" border="0" width="640" align="center" bgcolor="#ffffff">
+        <tr><td>
+        <![endif]-->
+        <!--[if !mso]><!-->
+        <table cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#ffffff" style="max-width:640px; border:2px solid #c8102e;">
+        <tr><td>
+        <!--<![endif]-->
+
+          <!-- Header bar -->
+          <table cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#c8102e">
+            <tr>
+              <td width="100" align="left" valign="bottom" style="padding: 16px 0 0 16px;">$character1</td>
+              <td align="center" style="padding: 24px 8px 8px 8px;">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Family_Guy_Logo.svg/250px-Family_Guy_Logo.svg.png" alt="Family Guy" width="160" style="display:block; border:0; outline:none;">
+              </td>
+              <td width="100" align="right" valign="bottom" style="padding: 16px 16px 0 0;">$character2</td>
+            </tr>
+            <tr>
+              <td colspan="3" align="center" bgcolor="#c8102e" style="padding: 4px 32px 20px 32px;">
+                <span style="color:#ffffff; font-size:13px; font-weight:bold; text-transform:uppercase; letter-spacing:2px;">New Episode Available</span>
+              </td>
+            </tr>
+          </table>
+
+          <!-- Body -->
+          <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr>
+              <td style="padding: 32px;">
+                <h1 style="margin:0 0 8px 0; font-size:24px; color:#1a1a1a; font-family:-apple-system,'Segoe UI',Arial,sans-serif;">$title</h1>
+                <p style="margin:0 0 24px 0; font-size:14px; color:#7a6a55;">Season $season &middot; Episode $episode &middot; Aired $airdate</p>
+                <p style="margin:0; font-size:15px; line-height:1.6; color:#3a2f24;">$summary</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 0 32px 32px 32px;">
+                $upcoming
+              </td>
+            </tr>
+          </table>
+
+          <!-- Footer -->
+          <table cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#fdf6ec">
+            <tr>
+              <td style="padding: 16px 32px; border-top:1px solid #e8dfd0; font-size:12px; color:#a8917a; text-align:center;">
+                Automated update from your Family Guy episode tracker
+              </td>
+            </tr>
+          </table>
+
+        <!--[if !mso]><!-->
+        </td></tr></table>
+        <!--<![endif]-->
+        <!--[if mso]>
+        </td></tr></table>
+        <![endif]-->
+
+      </td>
+    </tr>
+  </table>
+</body>
 </html>
