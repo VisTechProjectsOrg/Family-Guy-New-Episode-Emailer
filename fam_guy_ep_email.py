@@ -116,8 +116,10 @@ def fetch_episodes(log):
         log.error("No episodes found in API response")
         return None, []
 
-    aired = [ep for ep in episodes if ep.get("airdate") and ep["airdate"] <= today]
-    upcoming = [ep for ep in episodes if ep.get("airdate") and ep["airdate"] > today]
+    # Use airdate < today so emails go out the day after Fox airing,
+    # which is when episodes actually appear on Disney+/Hulu.
+    aired = [ep for ep in episodes if ep.get("airdate") and ep["airdate"] < today]
+    upcoming = [ep for ep in episodes if ep.get("airdate") and ep["airdate"] >= today]
 
     if not aired:
         log.error("No aired episodes found")
